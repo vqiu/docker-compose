@@ -1,0 +1,46 @@
+version: '3'
+services:
+    zk1:
+        image: zookeeper
+        networks:
+            - zk-net
+        environment:
+            ZOO_MY_ID: 1
+            ZOO_SERVERS: server.1=0.0.0.0:2888:3888 server.2=zk2:2888:3888 server.3=zk3:2888:3888
+
+    zk2:
+        image: zookeeper
+        networks:
+            - zk-net
+        environment:
+            ZOO_MY_ID: 2
+            ZOO_SERVERS: server.1=zk1:2888:3888 server.2=0.0.0.0:2888:3888 server.3=zk3:2888:3888
+
+    zk3:
+        image: zookeeper
+        networks:
+            - zk-net
+        environment:
+            ZOO_MY_ID: 3
+            ZOO_SERVERS: server.1=zk1:2888:3888 server.2=zk2:2888:3888 server.3=0.0.0.0:2888:3888
+
+    kafka:
+        image: wurstmeister/kafka
+        environment:
+            KAFKA_ADVERTISED_PORT: 9092
+            KAFKA_ZOOKEEPER_CONNECT: zk1:2181,zk2:2181,zk3:2181
+            KAFKA_HEAP_OPTS: -Xmx256M -Xms128M
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - zk-net
+            - kf-net
+        ports:
+            - 9092:9092
+
+networks:
+    zk-net:
+        driver: bridge
+
+    kf-net:
+        driver: bridge
