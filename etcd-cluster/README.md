@@ -1,6 +1,5 @@
-#### 提示
 
-3.1 可以使用名称代替IP，如下：
+etcd-3.1 可以使用名称代替IP，如下：
 ```
 services:
     etcd-1:
@@ -47,4 +46,4 @@ services:
             - '--initial-cluster-state=new'
 ```
 
-3.2 时需要指定IP，所以在添加了 `networks` 参数
+然而 etcd-3.2 时需要指定IP，所以添加了 `networks` 参数
