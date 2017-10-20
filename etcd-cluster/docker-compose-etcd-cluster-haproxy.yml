@@ -1,0 +1,103 @@
+version: '2.0'
+
+networks:
+    etcd-net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 10.0.0.0/24
+                  gateway: 10.0.0.14
+    proxy-net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 10.1.0.0/24
+                  gateway: 10.1.0.14
+volumes:
+    etcd-1:
+    etcd-2:
+    etcd-3:
+
+services:
+    etcd-1:
+        image: quay.io/coreos/etcd:latest
+        container_name: etcd-1
+        networks:
+            etcd-net:
+                ipv4_address: 10.0.0.1
+        entrypoint: /usr/local/bin/etcd
+        volumes:
+            - "etcd-1:/var/lib/etcd:rw"
+        command:
+            - '--name=etcd-1'
+            - '--data-dir=/var/lib/etcd/etcd-1.etcd'
+            - '--initial-advertise-peer-urls=http://10.0.0.1:2380'
+            - '--listen-peer-urls=http://10.0.0.1:2380'
+            - '--listen-client-urls=http://10.0.0.1:2379,http://localhost:2379'
+            - '--advertise-client-urls=http://10.0.0.1:2379'
+            - '--initial-cluster-token=mys3cr3ttok3n'
+            - '--heartbeat-interval=250'
+            - '--election-timeout=1250'
+            - '--initial-cluster=etcd-1=http://10.0.0.1:2380,etcd-2=http://10.0.0.2:2380,etcd-3=http://10.0.0.3:2380'
+            - '--initial-cluster-state=new'
+    etcd-2:
+        image: quay.io/coreos/etcd:latest
+        container_name: etcd-2
+        networks:
+            etcd-net:
+                ipv4_address: 10.0.0.2
+        entrypoint: /usr/local/bin/etcd
+        volumes:
+            - "etcd-2:/var/lib/etcd:rw"
+        command:
+            - '--name=etcd-2'
+            - '--data-dir=/var/lib/etcd/etcd-2.etcd'
+            - '--initial-advertise-peer-urls=http://10.0.0.2:2380'
+            - '--listen-peer-urls=http://10.0.0.2:2380'
+            - '--listen-client-urls=http://10.0.0.2:2379,http://localhost:2379'
+            - '--advertise-client-urls=http://10.0.0.2:2379'
+            - '--initial-cluster-token=mys3cr3ttok3n'
+            - '--heartbeat-interval=250'
+            - '--election-timeout=1250'
+            - '--initial-cluster=etcd-1=http://10.0.0.1:2380,etcd-2=http://10.0.0.2:2380,etcd-3=http://10.0.0.3:2380'
+            - '--initial-cluster-state=new'
+    etcd-3:
+        image: quay.io/coreos/etcd:latest
+        container_name: etcd-3
+        networks:
+            etcd-net:
+                ipv4_address: 10.0.0.3
+        entrypoint: /usr/local/bin/etcd
+        volumes:
+            - "etcd-3:/var/lib/etcd:rw"
+        command:
+            - '--name=etcd-3'
+            - '--data-dir=/var/lib/etcd/etcd-3.etcd'
+            - '--initial-advertise-peer-urls=http://10.0.0.3:2380'
+            - '--listen-peer-urls=http://10.0.0.3:2380'
+            - '--listen-client-urls=http://10.0.0.3:2379,http://localhost:2379'
+            - '--advertise-client-urls=http://10.0.0.1:2379'
+            - '--initial-cluster-token=mys3cr3ttok3n'
+            - '--heartbeat-interval=250'
+            - '--election-timeout=1250'
+            - '--initial-cluster=etcd-1=http://10.0.0.1:2380,etcd-2=http://10.0.0.2:2380,etcd-3=http://10.0.0.3:2380'
+            - '--initial-cluster-state=new'
+    proxy:
+        image: haproxy:1.7.9-alpine
+        container_name: haproxy
+        networks:
+            etcd-net:
+                ipv4_address: 10.0.0.10
+            proxy-net:
+                ipv4_address: 10.1.0.10
+        ports:
+            - "2379:2379"
+            - "9999:9999"
+        depends_on:
+            - etcd-1
+            - etcd-2
+            - etcd-3
+        volumes:
+            - "./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"
