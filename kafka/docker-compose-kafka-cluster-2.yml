@@ -1,0 +1,56 @@
+version: '3'
+
+networks:
+    kafka-net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.16.10.0/28
+
+services:
+    zk01:
+        image: zookeeper:3.4
+        hostname: zk01
+        networks:
+            - kafka-net
+        environment:
+            ZOO_MY_ID: 1
+            ZOO_SERVERS: server.1=zk01:2888:3888 server.2=zk02:2888:3888 server.3=zk03:2888:3888
+
+    zk02:
+        image: zookeeper:3.4
+        hostname: zk02
+        networks:
+            - kafka-net
+        environment:
+            ZOO_MY_ID: 2
+            ZOO_SERVERS: server.1=zk01:2888:3888 server.2=zk02:2888:3888 server.3=zk03:2888:3888
+
+    zk03:
+        image: zookeeper:3.4
+        hostname: zk03
+        networks:
+            - kafka-net
+        environment:
+            ZOO_MY_ID: 3
+            ZOO_SERVERS: server.1=zk01:2888:3888 server.2=zk02:2888:3888 server.3=zk03:2888:3888
+
+    kafka:
+        image: ches/kafka:latest
+        container_name: kafka
+        restart: always
+        networks:
+            - kafka-net
+        ports:
+            - 9092:9092
+        depends_on:
+            - zk01
+            - zk02
+            - zk03
+        environment:
+            KAFKA_BROKER_ID: 11
+            ZOOKEEPER_CONNECTION_STRING: "zk01:2181,zk02:2181,zk03:2181"
+            KAFKA_NUM_PARTITIONS: 4
+            KAFKA_LOG_RETENTION_HOURS: 96
+            KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
