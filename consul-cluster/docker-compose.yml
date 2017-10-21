@@ -1,0 +1,91 @@
+version: '2.0'
+services:
+  consul-01:
+    image: consul:1.0.0
+    container_name: consul-01
+    volumes:
+      - "consul-01:/consul/data"
+    entrypoint: /bin/consul
+    command:
+      - 'agent'
+      - '-bind=0.0.0.0'
+      - '-client=0.0.0.0'
+      - '-datacenter=dc1'
+      - '-node=m1'
+      - '-data-dir=/consul/data'
+      - '-encrypt=LnlIe2ovxKXB00HCqk6htQ=='
+      - '-server=true'
+      - '-bootstrap-expect=3'
+    environment:
+      - "CONSUL_BIND_INTERFACE=eth0"
+
+  consul-02:
+    image: consul:1.0.0
+    container_name: consul-02
+    volumes:
+      - "consul-02:/data/consul-02"
+    entrypoint: /bin/consul
+    command:
+      - 'agent'
+      - '-bind=0.0.0.0'
+      - '-client=0.0.0.0'
+      - '-datacenter=dc1'
+      - '-node=m2'
+      - '-data-dir=/consul/data'
+      - '-encrypt=LnlIe2ovxKXB00HCqk6htQ=='
+      - '-server=true'
+      - '-bootstrap-expect=3'
+      - '-retry-join=consul-01:8301'
+    environment:
+      - "CONSUL_BIND_INTERFACE=eth0"
+    depends_on:
+      - consul-01
+
+  consul-03:
+    image: consul:1.0.0
+    container_name: consul-03
+    volumes:
+      - "consul-03:/consul/data"
+    entrypoint: /bin/consul
+    command:
+      - 'agent'
+      - '-bind=0.0.0.0'
+      - '-client=0.0.0.0'
+      - '-datacenter=dc1'
+      - '-node=m3'
+      - '-data-dir=/consul/data'
+      - '-encrypt=LnlIe2ovxKXB00HCqk6htQ=='
+      - '-server=true'
+      - '-bootstrap-expect=3'
+      - '-retry-join=consul-01:8301'
+    environment:
+      - "CONSUL_BIND_INTERFACE=eth0"
+    depends_on:
+      - consul-01
+
+  agent:
+    image: consul:1.0.0
+    entrypoint: /bin/consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command:
+      - 'agent'
+      - '-bind=0.0.0.0'
+      - '-client=0.0.0.0'
+      - '-datacenter=dc1'
+      - '-node=agent'
+      - '-data-dir=/consul/data'
+      - '-encrypt=LnlIe2ovxKXB00HCqk6htQ=='
+      - '-server=false'
+      - '-retry-join=consul-01:8301'
+    environment:
+      - "CONSUL_BIND_INTERFACE=eth0"
+      - "CONSUL_LOCAL_CONFIG={'leave_on_terminate': true}"
+    depends_on:
+      - consul-01
+
+volumes:
+  consul-01:
+  consul-02:
+  consul-03:
