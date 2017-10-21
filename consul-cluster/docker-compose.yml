@@ -65,6 +65,7 @@ services:
 
   agent:
     image: consul:1.0.0
+    container_name: consul-agent
     entrypoint: /bin/consul
     ports:
       - "8500:8500"
